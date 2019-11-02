@@ -1,16 +1,50 @@
 # http://travis-ci.org/#!/graphite-project/carbon
 language: python
-python:
-    - 2.6
-    - 2.7
+python: 2.7
+# sudo is needed to install libboost-python-dev, which is required by pyhash
+sudo: required
+dist: xenial
+
+matrix:
+  include:
+    - python: pypy
+      env:
+        - TOXENV=pypy
+    - python: 3.5
+      env:
+        - TOXENV=py35
+    - python: 3.6
+      env:
+        - TOXENV=py36
+    - python: 3.7
+      sudo: true
+      env:
+        - TOXENV=py37
+    - python: "3.8-dev"
+      sudo: true
+      env:
+        - TOXENV=py38-pyhash
+    - python: "3.8-dev"
+      env:
+        - TOXENV=py38
+    - python: "3.8-dev"
+      env:
+        - TOXENV=lint
 
 env:
-    - TOXENV=ci
+  - TOXENV=py27
+  - TOXENV=py27-pyhash
+  - TOXENV=lint
+
+before_install:
+  - bash -c "if [[ '$TOXENV' == *pyhash* ]]; then sudo apt-get -qq update; sudo apt-get install -y libboost-python-dev; fi"
 
 install:
-    - pip install -r requirements.txt
-    - python setup.py install --prefix=$VIRTUAL_ENV --install-lib=$VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/site-packages
-    - pip install tox
+  - pip install tox
 
 script:
-    - tox -e $TOXENV
+  - tox -e $TOXENV
+
+after_success:
+  - pip install codecov
+  - codecov
